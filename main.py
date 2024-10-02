@@ -1,0 +1,146 @@
+import pygame  # подключаем библиотеку
+import sys  # подключаем модуль для
+from random import *
+
+pygame.init()
+
+WIDTH = 500
+HEIGHT = 500
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+clock = pygame.time.Clock()
+
+font = pygame.font.SysFont('Arial', 30)
+start_text_1 = font.render('Добро пожаловать!', False, (255, 0, 0))
+start_text_2 = font.render('Нажмите пробел, чтобы начать.', False, (255, 0, 0))
+
+end_text_1 = font.render('Вы прошли игру! Нажмите пробел,', False, (0, 255, 0))
+end_text_2 = font.render('чтобы начать заново.', False, (0, 255, 0))
+
+
+class Sprite:
+    def __init__(self, x, y, w, h, img_path):
+        self.rect = pygame.Rect(x, y, w, h)
+        self.img_orig = pygame.image.load(img_path)
+        self.img = pygame.transform.scale(self.img_orig, (w, h))
+        self.direction = 'none'
+
+    def move(self):
+        if self.direction == 'right':
+            self.rect.x += 5
+        elif self.direction == 'left':
+            self.rect.x -= 5
+        elif self.direction == 'up':
+            self.rect.y -= 5
+        elif self.direction == 'down':
+            self.rect.y += 5
+
+    def draw(self):
+        screen.blit(self.img, self.rect)
+
+
+player = Sprite(400, 400, 50, 50, 'steve.png')
+enemy = Sprite(50, 50, 30, 30, 'creeper.png')
+
+exit_img = pygame.image.load('exit-door.png')
+exit_img = pygame.transform.scale(exit_img, (30, 30))
+
+skin1 = Sprite(100, 225, 50, 50, 'steve.png')
+skin2 = Sprite(225, 225, 50, 50, 'knight.png')
+skin3 = Sprite(350, 225, 50, 50, 'tomato.png')
+
+game_state = 0
+
+while True:
+    screen.fill((255, 255, 255))
+    if game_state == 0:
+        for e in pygame.event.get():
+            if e.type == pygame.QUIT:
+                sys.exit()
+            if e.type == pygame.KEYDOWN:
+                if e.key == pygame.K_SPACE:
+                    game_state = 3
+            if e.type == pygame.MOUSEBUTTONDOWN:
+                x, y = e.pos
+                if 10 <= x <= 40 and 10 <= y <= 40:
+                    sys.exit()
+
+        screen.blit(start_text_1, (20, 225))
+        screen.blit(start_text_2, (20, 255))
+
+    if game_state == 2:
+        for e in pygame.event.get():
+            if e.type == pygame.QUIT:
+                sys.exit()
+            if e.type == pygame.KEYDOWN:
+                if e.key == pygame.K_SPACE:
+                    player.rect.x, player.rect.y, player.rect.width, player.rect.height = 400, 400, 50, 50
+                    enemy.rect.x, enemy.rect.y = 50, 50
+                    player.img = pygame.transform.scale(player.img_orig, (player.rect.width, player.rect.height))
+                    game_state = 1
+            if e.type == pygame.MOUSEBUTTONDOWN:
+                x, y = e.pos
+                if 10 <= x <= 40 and 10 <= y <= 40:
+                    sys.exit()
+
+        screen.blit(end_text_1, (20, 225))
+        screen.blit(end_text_2, (20, 255))
+
+    if game_state == 3:
+        for e in pygame.event.get():
+            if e.type == pygame.QUIT:
+                sys.exit()
+            if e.type == pygame.MOUSEBUTTONDOWN:
+                x, y = e.pos
+                if skin2.rect.x <= x <= skin2.rect.right and skin2.rect.y <= y <= skin2.rect.bottom:
+                    player.img_orig = pygame.image.load('knight.png')
+                    player.img = pygame.transform.scale(player.img_orig, (player.rect.width, player.rect.height))
+                    game_state = 1
+                if skin3.rect.x <= x <= skin3.rect.right and skin3.rect.y <= y <= skin3.rect.bottom:
+                    player.img_orig = pygame.image.load('tomato.png')
+                    player.img = pygame.transform.scale(player.img_orig, (player.rect.width, player.rect.height))
+                    game_state = 1
+                else:
+                    game_state = 1
+
+        skin1.draw()
+        skin2.draw()
+        skin3.draw()
+
+    if game_state == 1:
+        for e in pygame.event.get():
+            if e.type == pygame.QUIT:
+                sys.exit()
+            if e.type == pygame.KEYDOWN:
+                if e.key == pygame.K_RIGHT:
+                    player.direction = 'right'
+                elif e.key == pygame.K_LEFT:
+                    player.direction = 'left'
+                elif e.key == pygame.K_UP:
+                    player.direction = 'up'
+                elif e.key == pygame.K_DOWN:
+                    player.direction = 'down'
+            if e.type == pygame.KEYUP:
+                player.direction = 'none'
+            if e.type == pygame.MOUSEBUTTONDOWN:
+                x, y = e.pos
+                if 10 <= x <= 40 and 10 <= y <= 40:
+                    sys.exit()
+
+        player.move()
+
+        if player.rect.colliderect(enemy.rect):
+            enemy.rect.x = randint(0, 470)
+            enemy.rect.y = randint(0, 470)
+            player.rect.width += 5
+            player.rect.height += 5
+            player.img = pygame.transform.scale(player.img_orig, (player.rect.width, player.rect.height))
+
+        if player.rect.width >= 100:
+            game_state = 2
+
+        player.draw()
+        enemy.draw()
+
+    screen.blit(exit_img, (10, 10))
+    pygame.display.update()
+    clock.tick(60)
